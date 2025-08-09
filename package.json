@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-comfyui-image-audio-to-video",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "n8n node to integrate with ComfyUI stable diffusion workflows for image to video conversion",
   "keywords": [
     "n8n-community-node-package",
@@ -21,13 +21,11 @@
     "url": "https://github.com/GangulyCo/n8n-nodes-comfyui-image-audio-to-video.git"
   },
   "engines": {
-    "node": ">=18.10",
-    "pnpm": ">=9.1"
+    "node": ">=18.10"
   },
   "packageManager": "pnpm@9.1.4",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
@@ -48,6 +46,7 @@
     ]
   },
   "devDependencies": {
+    "@types/form-data": "^2.2.1",
     "@types/node": "^24.2.1",
     "@typescript-eslint/parser": "~8.32.0",
     "eslint": "^8.57.0",
