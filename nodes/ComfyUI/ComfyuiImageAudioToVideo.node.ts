@@ -25,7 +25,7 @@ interface ImageInfo {
 	type: string;
 }
 
-export class ComfyuiImageToVideo implements INodeType {
+export class ComfyuiImageAudioToVideo implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'ComfyUI Image Audio to Video',
 		name: 'comfyuiImageAudioToVideo',
