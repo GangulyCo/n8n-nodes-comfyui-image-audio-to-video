@@ -1,8 +1,11 @@
+/* eslint-disable n8n-nodes-base/node-class-description-outputs-wrong */
+/* eslint-disable n8n-nodes-base/node-class-description-inputs-wrong-regular-node */
 import {
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	NodeConnectionType,
 } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 import FormData from 'form-data';
@@ -42,10 +45,8 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 				required: true,
 			},
 		],
-		// @ts-ignore - 'main' literal accepted by n8n runtime; enum type mismatch in local typings
-		inputs: ['main'],
-		// @ts-ignore - 'main' literal accepted by n8n runtime; enum type mismatch in local typings
-		outputs: ['main'],
+		inputs: [NodeConnectionType.Main],
+		outputs: [NodeConnectionType.Main],
 		properties: [
 			{
 				displayName: 'Workflow JSON',
@@ -145,7 +146,7 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 
 			// Prepare input image
 			let imageBuffer: Buffer;
-			
+
 			if (inputType === 'url') {
 				// Download image from URL
 				const inputImage = this.getNodeParameter('inputImage', 0) as string;
@@ -159,45 +160,45 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 			} else if (inputType === 'binary') {
 				// Get binary data using helpers
 				console.log('[ComfyUI] Getting binary data from input');
-				
+
 				// Get the binary property name
 				const binaryPropertyName = this.getNodeParameter('binaryPropertyName', 0) as string;
 				console.log('[ComfyUI] Looking for binary property:', binaryPropertyName);
-				
+
 				// Log available binary properties for debugging
 				const items = this.getInputData();
 				const binaryProperties = Object.keys(items[0].binary || {});
 				console.log('[ComfyUI] Available binary properties:', binaryProperties);
-				
+
 				// Try to find the specified binary property
 				let actualPropertyName = binaryPropertyName;
-				
+
 				if (!items[0].binary?.[binaryPropertyName]) {
 					console.log(`[ComfyUI] Binary property "${binaryPropertyName}" not found, searching for alternatives...`);
-					
+
 					// Try to find any image property as fallback
-					const imageProperty = binaryProperties.find(key => 
+					const imageProperty = binaryProperties.find(key =>
 						items[0].binary![key].mimeType?.startsWith('image/')
 					);
-					
+
 					if (imageProperty) {
 						console.log(`[ComfyUI] Found alternative image property: "${imageProperty}"`);
 						actualPropertyName = imageProperty;
 					} else {
-						throw new NodeApiError(this.getNode(), { 
+						throw new NodeApiError(this.getNode(), {
 							message: `No binary data found in property "${binaryPropertyName}" and no image alternatives found`
 						});
 					}
 				}
-				
+
 				// Get binary data
 				imageBuffer = await this.helpers.getBinaryDataBuffer(0, actualPropertyName);
 				console.log('[ComfyUI] Got binary data, size:', imageBuffer.length, 'bytes');
-				
+
 				// Get mime type for validation
 				const mimeType = items[0].binary![actualPropertyName].mimeType;
 				console.log('[ComfyUI] Binary data mime type:', mimeType);
-				
+
 				// Validate it's an image
 				if (!mimeType || !mimeType.startsWith('image/')) {
 					throw new NodeApiError(this.getNode(), {
@@ -259,7 +260,7 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 			try {
 				workflowData = JSON.parse(workflow);
 			} catch (error) {
-				throw new NodeApiError(this.getNode(), { 
+				throw new NodeApiError(this.getNode(), {
 					message: 'Invalid workflow JSON. Please check the JSON syntax and try again.',
 					description: error.message
 				});
@@ -267,7 +268,7 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 
 			// Validate workflow structure
 			if (typeof workflowData !== 'object' || workflowData === null) {
-				throw new NodeApiError(this.getNode(), { 
+				throw new NodeApiError(this.getNode(), {
 					message: 'Invalid workflow structure. The workflow must be a valid JSON object.'
 				});
 			}
@@ -357,7 +358,7 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 
 					// Check outputs structure
 					console.log('[ComfyUI] Raw outputs structure:', JSON.stringify(promptResult.outputs, null, 2));
-					
+
 					// Get all images outputs with simpler approach
 					const mediaOutputs = Object.values(promptResult.outputs)
 						.flatMap((nodeOutput: any) => nodeOutput.images || nodeOutput.gifs || [])
@@ -374,8 +375,8 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 					}
 
 					// Prioritize video outputs (WEBP, MP4, etc.)
-					const videoOutputs = mediaOutputs.filter(output => 
-						output.filename.endsWith('.webp') || 
+					const videoOutputs = mediaOutputs.filter(output =>
+						output.filename.endsWith('.webp') ||
 						output.filename.endsWith('.mp4') ||
 						output.filename.endsWith('.gif')
 					);
@@ -388,59 +389,59 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 
 					// Return the first video output
 					const videoOutput = videoOutputs[0];
-                    
-                    const videoResponse = await this.helpers.request({
-                        method: 'GET',
-                        url: videoOutput.url,
-                        encoding: null,
-                        resolveWithFullResponse: true
-                    });
 
-                    if (videoResponse.statusCode === 404) {
-                        throw new NodeApiError(this.getNode(), { message: `Video file not found at ${videoOutput.url}` });
-                    }
+					const videoResponse = await this.helpers.request({
+						method: 'GET',
+						url: videoOutput.url,
+						encoding: null,
+						resolveWithFullResponse: true
+					});
 
-                    console.log('[ComfyUI] Using media directly from ComfyUI');
-                    const buffer = Buffer.from(videoResponse.body);
-                    const base64Data = buffer.toString('base64');
-                    const fileSize = Math.round(buffer.length / 1024 * 10) / 10 + " kB";
+					if (videoResponse.statusCode === 404) {
+						throw new NodeApiError(this.getNode(), { message: `Video file not found at ${videoOutput.url}` });
+					}
 
-                    // Determine MIME type based on file extension
-                    let mimeType = 'image/webp';
-                    let fileExtension = 'webp';
-                    
-                    if (videoOutput.filename.endsWith('.mp4')) {
-                        mimeType = 'video/mp4';
-                        fileExtension = 'mp4';
-                    } else if (videoOutput.filename.endsWith('.gif')) {
-                        mimeType = 'image/gif';
-                        fileExtension = 'gif';
-                    }
+					console.log('[ComfyUI] Using media directly from ComfyUI');
+					const buffer = Buffer.from(videoResponse.body);
+					const base64Data = buffer.toString('base64');
+					const fileSize = Math.round(buffer.length / 1024 * 10) / 10 + " kB";
 
-                    return [[{
-                        json: {
-                            mimeType,
-                            fileName: videoOutput.filename,
-                            data: base64Data,
-                            status: promptResult.status,
-                        },
-                        binary: {
-                            data: {
-                                fileName: videoOutput.filename,
-                                data: base64Data,
-                                fileType: 'video',
-                                fileSize,
-                                fileExtension,
-                                mimeType
-                            }
-                        }
-                    }]];
+					// Determine MIME type based on file extension
+					let mimeType = 'image/webp';
+					let fileExtension = 'webp';
+
+					if (videoOutput.filename.endsWith('.mp4')) {
+						mimeType = 'video/mp4';
+						fileExtension = 'mp4';
+					} else if (videoOutput.filename.endsWith('.gif')) {
+						mimeType = 'image/gif';
+						fileExtension = 'gif';
+					}
+
+					return [[{
+						json: {
+							mimeType,
+							fileName: videoOutput.filename,
+							data: base64Data,
+							status: promptResult.status,
+						},
+						binary: {
+							data: {
+								fileName: videoOutput.filename,
+								data: base64Data,
+								fileType: 'video',
+								fileSize,
+								fileExtension,
+								mimeType
+							}
+						}
+					}]];
 				}
 			}
 			throw new NodeApiError(this.getNode(), { message: `Video generation timeout after ${timeout} minutes` });
 		} catch (error) {
 			console.error('[ComfyUI] Video generation error:', error);
-			throw new NodeApiError(this.getNode(), { 
+			throw new NodeApiError(this.getNode(), {
 				message: `ComfyUI API Error: ${error.message}`,
 				description: error.description || ''
 			});
