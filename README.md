@@ -1,134 +1,48 @@
 ![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
 
-# n8n-nodes-comfyui-image-audio-to-video
+# n8n-nodes-starter
 
-This package provides n8n nodes to integrate with [ComfyUI](https://github.com/comfyanonymous/ComfyUI) - A powerful and modular stable diffusion GUI with a graph/nodes interface.
+This repo contains example nodes to help you get started building your own custom integrations for [n8n](https://n8n.io). It includes the node linter and other dependencies.
 
-## Features
+To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
 
-- Execute ComfyUI workflows directly from n8n
-- Generate images and videos using stable diffusion models
-- Support for workflow JSON import
-- Automatic output retrieval from workflow outputs
-- Progress monitoring and error handling
-- Support for API key authentication
-- Configurable timeout settings
+If you would like your node to be available on n8n cloud you can also [submit your node for verification](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/).
 
 ## Prerequisites
 
-- n8n (version 1.0.0 or later)
-- ComfyUI instance running and accessible
-- Node.js 16 or newer
+You need the following installed on your development machine:
 
-## Installation
+* [git](https://git-scm.com/downloads)
+* Node.js and npm. Minimum version Node 20. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
+* Install n8n with:
+  ```
+  npm install n8n -g
+  ```
+* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
 
-```bash
-npm install n8n-nodes-comfyui-image-audio-to-video
-```
+## Using this starter
 
-## Node Types
+These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
 
-### ComfyUI Node
+1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
+2. Clone your new repo:
+   ```
+   git clone https://github.com/<your organization>/<your-repo-name>.git
+   ```
+3. Run `npm i` to install dependencies.
+4. Open the project in your editor.
+5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
+6. Update the `package.json` to match your details.
+7. Run `npm run lint` to check for errors or `npm run lintfix` to automatically fix errors when possible.
+8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
+9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
+10. Update the LICENSE file to use your details.
+11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
 
-This node allows you to execute ComfyUI workflows and retrieve generated images.
+## More information
 
-#### Settings
-
-- **API URL**: The URL of your ComfyUI instance (default: http://127.0.0.1:8188)
-- **API Key**: Optional API key if authentication is enabled
-- **Workflow JSON**: The ComfyUI workflow in JSON format
-
-#### Outputs
-
-The node outputs an array of generated images with:
-- `filename`: Name of the generated image file
-- `subfolder`: Subfolder path if any
-- `data`: Base64 encoded image data
-
-### ComfyUI Image to Video Node
-
-This node allows you to convert images to videos using ComfyUI's image-to-video capabilities (like AnimateDiff, WanImageToVideo, or video generation models).
-
-#### Settings
-
-- **API URL**: The URL of your ComfyUI instance (default: http://127.0.0.1:8188)
-- **API Key**: Optional API key if authentication is enabled
-- **Workflow JSON**: The ComfyUI workflow in JSON format for video generation
-- **Input Type**: Choose between URL, Base64, or Binary input methods
-- **Input Image**: URL or base64 string of the input image (when using URL or Base64 input type)
-- **Binary Property**: Name of the binary property containing the image (when using Binary input type)
-- **Timeout**: Maximum time in minutes to wait for video generation
-
-#### Input
-
-The node accepts an image input in three ways:
-1. **URL**: Provide a direct URL to an image
-2. **Base64**: Provide a base64-encoded image string
-3. **Binary**: Use an image from a binary property in the workflow (e.g., from an HTTP Request node)
-
-#### Outputs
-
-The node outputs the generated video:
-- In the `binary.data` property with proper MIME type and file information
-- `fileName`: Name of the generated video file
-- `data`: Base64 encoded video data
-- `fileType`: The type of video file (e.g., 'video')
-- `fileSize`: Size of the video in KB
-- `fileExtension`: File extension (webp, mp4, gif)
-- `mimeType`: MIME type of the video
-
-> **Note**: If multiple videos are generated by the ComfyUI workflow, only the first video output will be returned. The node currently prioritizes video outputs (files with .webp, .mp4, or .gif extensions) and returns the first one it finds.
-
-## Usage Examples
-
-### Using the ComfyUI Node
-
-1. Export your workflow from ComfyUI as JSON
-2. Create a new workflow in n8n
-3. Add the ComfyUI node
-4. Paste your workflow JSON
-5. Configure the API URL
-6. Execute and retrieve generated images
-
-### Using the ComfyUI Image to Video Node
-
-1. Create a workflow in ComfyUI for video generation (e.g., using WanImageToVideo, VHS_VideoCombine)
-2. Export the workflow as JSON (API)
-4. Add the ComfyUI Image to Video node
-5. Paste your workflow JSON
-6. Select the appropriate Input Type:
-   - For URL: Enter the image URL
-   - For Base64: Provide a base64 string
-   - For Binary: Specify the binary property containing the image (default: "data")
-7. Configure timeout as needed
-8. Execute the workflow to generate a video from your input image
-
-## Error Handling
-
-The node includes comprehensive error handling for:
-- API connection issues
-- Invalid workflow JSON
-- Execution failures
-- Timeout conditions
-- Input image validation
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Test
-npm run test
-
-# Lint
-npm run lint
-```
+Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
 
 ## License
 
-[MIT](LICENSE.md)
- 
+[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)

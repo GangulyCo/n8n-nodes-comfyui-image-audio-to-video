@@ -1,13 +1,10 @@
-/* eslint-disable n8n-nodes-base/node-class-description-outputs-wrong */
-/* eslint-disable n8n-nodes-base/node-class-description-inputs-wrong-regular-node */
-import {
+import type {
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	NodeConnectionType,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionType } from 'n8n-workflow';
 import FormData from 'form-data';
 
 interface ComfyUINode {
@@ -28,10 +25,10 @@ interface ImageInfo {
 	type: string;
 }
 
-export class ComfyuiImageAudioToVideo implements INodeType {
+export class ComfyuiImageAudioToVideoNode implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'ComfyUI Image Audio to Video',
-		name: 'comfyuiImageAudioToVideo',
+		displayName: 'ComfyUI Image Audio to Video Node',
+		name: 'comfyuiImageAudioToVideoNode',
 		icon: 'file:comfyui.svg',
 		group: ['transform'],
 		version: 1,
@@ -114,6 +111,10 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 		],
 	};
 
+	// The function below is responsible for actually doing whatever this node
+	// is supposed to do. In this case, we're just appending the `myString` property
+	// with whatever the user has entered.
+	// You can make async calls and use `await`.
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const credentials = await this.getCredentials('comfyUIApi');
 		const workflow = this.getNodeParameter('workflow', 0) as string;
@@ -447,4 +448,4 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 			});
 		}
 	}
-} 
+}

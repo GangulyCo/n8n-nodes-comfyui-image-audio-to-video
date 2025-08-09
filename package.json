@@ -1,11 +1,12 @@
 {
   "name": "n8n-nodes-comfyui-image-audio-to-video",
-  "version": "1.0.6",
-  "description": "n8n node to integrate with ComfyUI stable diffusion workflows for image to video conversion",
+  "version": "1.0.9",
+  "description": "n8n node to integrate with ComfyUI for image-audio to video conversion",
   "keywords": [
     "n8n-community-node-package",
     "comfyui",
     "stable-diffusion",
+    "flux.1-dev",
     "image-audio-to-video",
     "video-generation",
     "wan-image-to-video"
@@ -21,16 +22,16 @@
     "url": "https://github.com/GangulyCo/n8n-nodes-comfyui-image-audio-to-video.git"
   },
   "engines": {
-    "node": ">=18.10"
+    "node": ">=20.15"
   },
   "main": "index.js",
   "scripts": {
-    "build": "tsc && gulp build:icons",
+    "build": "npx rimraf dist && tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
-    "prepublishOnly": "pnpm build && pnpm lint -c .eslintrc.prepublish.js nodes credentials package.json"
+    "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes credentials package.json"
   },
   "files": [
     "dist"
@@ -41,11 +42,10 @@
       "dist/credentials/ComfyUIApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/ComfyUI/ComfyuiImageAudioToVideo.node.js"
+      "dist/nodes/ComfyuiImageAudioToVideoNode/ComfyuiImageAudioToVideoNode.node.js"
     ]
   },
   "devDependencies": {
-    "@types/form-data": "^2.2.1",
     "@types/node": "^24.2.1",
     "@typescript-eslint/parser": "~8.32.0",
     "eslint": "^8.57.0",
@@ -58,6 +58,6 @@
     "n8n-workflow": "*"
   },
   "dependencies": {
-    "form-data": "^4.0.0"
+    "form-data": "^4.0.4"
   }
 }
