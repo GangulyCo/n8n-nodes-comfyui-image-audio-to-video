@@ -27,14 +27,14 @@ interface ImageInfo {
 
 export class ComfyuiImageToVideo implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'ComfyUI Image to Video',
-		name: 'comfyuiImageToVideo',
+		displayName: 'ComfyUI Image Audio to Video',
+		name: 'comfyuiImageAudioToVideo',
 		icon: 'file:comfyui.svg',
 		group: ['transform'],
 		version: 1,
-		description: 'Convert images to videos using ComfyUI workflow',
+		description: 'Convert images and audio to videos using ComfyUI workflow',
 		defaults: {
-			name: 'ComfyUI Image to Video',
+			name: 'ComfyUI Image Audio to Video',
 		},
 		credentials: [
 			{
@@ -93,6 +93,13 @@ export class ComfyuiImageToVideo implements INodeType {
 					},
 				},
 				description: 'Name of the binary property containing the image',
+			},
+			{
+				displayName: 'Audio Binary Property',
+				name: 'audioBinaryPropertyName',
+				type: 'string',
+				default: '',
+				description: 'Optional: Name of the binary property containing the audio MP3 file to attach (will look for LoadAudio node)',
 			},
 			{
 				displayName: 'Timeout',
@@ -201,25 +208,49 @@ export class ComfyuiImageToVideo implements INodeType {
 				imageBuffer = Buffer.from(inputImage, 'base64');
 			}
 
-			// Upload image to ComfyUI
-			console.log('[ComfyUI] Uploading image...');
-			const formData = new FormData();
-			formData.append('image', imageBuffer, 'input.png');
-			formData.append('subfolder', '');
-			formData.append('overwrite', 'true');
+			// Helper to upload buffer (image/audio) using the /upload/image endpoint per requirements
+			const uploadBuffer = async (buffer: Buffer, filename: string): Promise<ImageInfo> => {
+				console.log(`[ComfyUI] Uploading file ${filename}...`);
+				const fd = new FormData();
+				fd.append('image', buffer, filename); // Using field name 'image' as requested
+				fd.append('subfolder', '');
+				fd.append('overwrite', 'true');
+				const resp = await this.helpers.request({
+					method: 'POST',
+					url: `${apiUrl}/upload/image`,
+					headers: {
+						...headers,
+						...fd.getHeaders(),
+					},
+					body: fd,
+				});
+				const info = JSON.parse(resp) as ImageInfo;
+				console.log('[ComfyUI] Upload response for', filename, info);
+				return info;
+			};
 
-			const uploadResponse = await this.helpers.request({
-				method: 'POST',
-				url: `${apiUrl}/upload/image`,
-				headers: {
-					...headers,
-					...formData.getHeaders(),
-				},
-				body: formData,
-			});
+			// Always upload image first
+			const imageInfo = await uploadBuffer(imageBuffer, 'input.png');
 
-			const imageInfo = JSON.parse(uploadResponse) as ImageInfo;
-			console.log('[ComfyUI] Image uploaded:', imageInfo);
+			// Optional audio upload
+			const audioBinaryPropertyName = this.getNodeParameter('audioBinaryPropertyName', 0, '') as string;
+			let audioInfo: ImageInfo | null = null;
+			if (audioBinaryPropertyName) {
+				const items = this.getInputData();
+				if (!items[0].binary?.[audioBinaryPropertyName]) {
+					console.log(`[ComfyUI] Audio binary property "${audioBinaryPropertyName}" not found, skipping audio upload.`);
+				} else {
+					console.log('[ComfyUI] Preparing audio upload from property:', audioBinaryPropertyName);
+					const audioBinary = items[0].binary[audioBinaryPropertyName];
+					const mimeType = audioBinary.mimeType || '';
+					if (!mimeType.startsWith('audio/')) {
+						throw new NodeApiError(this.getNode(), { message: `Provided audio binary property is not audio (mime: ${mimeType})` });
+					}
+					const audioBuffer = await this.helpers.getBinaryDataBuffer(0, audioBinaryPropertyName);
+					// Use .mp3 filename even if other audio provided (per requirement mp3)
+					audioInfo = await uploadBuffer(audioBuffer, 'input.mp3');
+				}
+			}
 
 			// Parse and modify workflow JSON
 			let workflowData;
@@ -239,19 +270,35 @@ export class ComfyuiImageToVideo implements INodeType {
 				});
 			}
 
-			// Find the LoadImage node and update its image data
-			const loadImageNode = Object.values(workflowData as ComfyUIWorkflow).find((node: ComfyUINode) => 
+			// Find and update LoadImage node
+			const loadImageNode = Object.values(workflowData as ComfyUIWorkflow).find((node: ComfyUINode) =>
 				node.class_type === 'LoadImage' && node.inputs && node.inputs.image !== undefined
 			);
-
 			if (!loadImageNode) {
-				throw new NodeApiError(this.getNode(), { 
-					message: 'No LoadImage node found in the workflow. The workflow must contain a LoadImage node with an image input.'
-				});
+				throw new NodeApiError(this.getNode(), { message: 'No LoadImage node found in the workflow. The workflow must contain a LoadImage node with an image input.' });
 			}
-
-			// Update the image input with the uploaded image info
 			loadImageNode.inputs.image = imageInfo.name;
+			console.log('[ComfyUI] LoadImage node updated with image name:', imageInfo.name);
+
+			// Find and update LoadAudio node if audio uploaded
+			if (audioInfo) {
+				const loadAudioNode = Object.values(workflowData as ComfyUIWorkflow).find((node: ComfyUINode) =>
+					node.class_type === 'LoadAudio' && node.inputs && (node.inputs.audio !== undefined || node.inputs.filename !== undefined)
+				);
+				if (!loadAudioNode) {
+					throw new NodeApiError(this.getNode(), { message: 'Audio binary provided but no LoadAudio node found in the workflow.' });
+				}
+				// Different workflows may use "audio" or "filename" for LoadAudio
+				if (loadAudioNode.inputs.audio !== undefined) {
+					loadAudioNode.inputs.audio = audioInfo.name;
+				} else if (loadAudioNode.inputs.filename !== undefined) {
+					loadAudioNode.inputs.filename = audioInfo.name;
+				} else {
+					// Fallback - set a common property
+					loadAudioNode.inputs.audio = audioInfo.name;
+				}
+				console.log('[ComfyUI] LoadAudio node updated with audio name:', audioInfo.name);
+			}
 
 			// Queue video generation
 			console.log('[ComfyUI] Queueing video generation...');

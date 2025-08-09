@@ -1,24 +1,24 @@
 {
-  "name": "n8n-nodes-comfyui-image-to-video",
-  "version": "1.0.1",
+  "name": "n8n-nodes-comfyui-image-audio-to-video",
+  "version": "1.0.0",
   "description": "n8n node to integrate with ComfyUI stable diffusion workflows for image to video conversion",
   "keywords": [
     "n8n-community-node-package",
     "comfyui",
     "stable-diffusion",
-    "image-to-video",
+    "image-audio-to-video",
     "video-generation",
     "wan-image-to-video"
   ],
   "license": "MIT",
   "homepage": "",
   "author": {
-    "name": "christiankuri",
-    "email": "mintedwealth.es@gmail.com"
+    "name": "bartf",
+    "email": "bart@gnco.ai"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/christiankuri/n8n-nodes-comfyui-image-to-video.git"
+    "url": "git+https://github.com/GangulyCo/n8n-nodes-comfyui-image-audio-to-video.git"
   },
   "engines": {
     "node": ">=18.10",
@@ -44,7 +44,7 @@
       "dist/credentials/ComfyUIApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/ComfyUI/ComfyuiImageToVideo.node.js"
+      "dist/nodes/ComfyUI/ComfyuiImageAudioToVideo.node.js"
     ]
   },
   "devDependencies": {
