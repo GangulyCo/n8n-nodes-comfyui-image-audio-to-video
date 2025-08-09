@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-comfyui-image-audio-to-video",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "n8n node to integrate with ComfyUI stable diffusion workflows for image to video conversion",
   "keywords": [
     "n8n-community-node-package",
@@ -23,7 +23,6 @@
   "engines": {
     "node": ">=18.10"
   },
-  "packageManager": "pnpm@9.1.4",
   "main": "index.js",
   "scripts": {
     "build": "tsc && gulp build:icons",
