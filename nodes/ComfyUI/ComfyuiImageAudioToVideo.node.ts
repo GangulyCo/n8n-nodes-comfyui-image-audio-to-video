@@ -42,7 +42,9 @@ export class ComfyuiImageAudioToVideo implements INodeType {
 				required: true,
 			},
 		],
+		// @ts-ignore - 'main' literal accepted by n8n runtime; enum type mismatch in local typings
 		inputs: ['main'],
+		// @ts-ignore - 'main' literal accepted by n8n runtime; enum type mismatch in local typings
 		outputs: ['main'],
 		properties: [
 			{
